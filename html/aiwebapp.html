@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Catch the Food Game</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background-color: #f8f8f8;
+      overflow: hidden;
+    }
+    #gameCanvas {
+      display: block;
+      background: linear-gradient(to bottom, #ffecd2, #fcb69f);
+      margin: 0 auto;
+      position: relative;
+      height: 600px;
+    }
+    .food {
+      width: 30px;
+      height: 30px;
+      position: absolute;
+      border-radius: 50%;
+    }
+    .plate {
+      width: 80px;
+      height: 20px;
+      position: absolute;
+      bottom: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #ff5733;
+      border-radius: 10px;
+    }
+    #scoreBoard {
+      position: absolute;
+      top: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 20px;
+      color: #333;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <div id="scoreBoard">Score: 0</div>
+  <div id="gameCanvas">
+    <div class="plate"></div>
+  </div>
+
+  <script>
+    const gameCanvas = document.getElementById('gameCanvas');
+    const plate = document.querySelector('.plate');
+    const scoreBoard = document.getElementById('scoreBoard');
+
+    let score = 0;
+    const plateSpeed = 20;
+    const foodSpeed = 2;
+    const foodSpawnInterval = 1000; // Time between food spawns in ms
+    const foodObjects = [];
+
+    // Randomize food color and position
+    function createFood() {
+      const food = document.createElement('div');
+      food.classList.add('food');
+      food.style.backgroundColor = getRandomColor();
+      food.style.left = Math.random() * (gameCanvas.offsetWidth - 30) + 'px';
+      food.style.top = '0px';
+      gameCanvas.appendChild(food);
+      foodObjects.push(food);
+    }
+
+    function getRandomColor() {
+      const colors = ['#ff6f61', '#f8de7e', '#a1c6ea', '#ffa07a', '#98fb98'];
+      return colors[Math.floor(Math.random() * colors.length)];
+    }
+
+    function updateFood() {
+      for (let i = 0; i < foodObjects.length; i++) {
+        const food = foodObjects[i];
+        const foodTop = parseFloat(food.style.top);
+        food.style.top = foodTop + foodSpeed + 'px';
+
+        const plateRect = plate.getBoundingClientRect();
+        const foodRect = food.getBoundingClientRect();
+
+        // Check if the food is caught
+        if (
+          foodRect.bottom >= plateRect.top &&
+          foodRect.left < plateRect.right &&
+          foodRect.right > plateRect.left
+        ) {
+          score++;
+          scoreBoard.textContent = `Score: ${score}`;
+          food.remove();
+          foodObjects.splice(i, 1);
+          i--;
+        }
+
+        // Remove food if it falls off the screen
+        if (foodTop > gameCanvas.offsetHeight) {
+          food.remove();
+          foodObjects.splice(i, 1);
+          i--;
+        }
+      }
+    }
+
+    function movePlate(e) {
+      const plateLeft = parseFloat(plate.style.left || '50%');
+      const canvasWidth = gameCanvas.offsetWidth;
+
+      if (e.key === 'ArrowLeft' && plateLeft > 0) {
+        plate.style.left = Math.max(plateLeft - plateSpeed, 0) + 'px';
+      } else if (e.key === 'ArrowRight' && plateLeft + plate.offsetWidth < canvasWidth) {
+        plate.style.left = Math.min(plateLeft + plateSpeed, canvasWidth - plate.offsetWidth) + 'px';
+      }
+    }
+
+    function startGame() {
+      plate.style.left = '50%';
+
+      // Create food at intervals
+      setInterval(createFood, foodSpawnInterval);
+
+      // Update falling food
+      setInterval(updateFood, 16); // 60 FPS
+    }
+
+    // Start the game and add event listeners
+    startGame();
+    window.addEventListener('keydown', movePlate);
+  </script>
+</body>
+</html>
